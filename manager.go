@@ -154,10 +154,11 @@ func (m *manager) Run() error {
 			select {
 			case e := <-m.watcher.Events:
 				path := m.pluginPath(e.Name)
-				log.Print(e)
 				if !m.isPlugin(path) {
 					continue
 				}
+
+				log.Print(e)
 				p, ok := m.cache[path]
 				if !ok || p == nil {
 					log.Println(path)
@@ -166,14 +167,17 @@ func (m *manager) Run() error {
 				}
 				if e.Op&fsnotify.Write == fsnotify.Write {
 					p.Reload()
+					log.Print("p.reload()")
 					continue
 				}
 				if e.Op&fsnotify.Create == fsnotify.Create {
 					p.Load()
+					log.Print("p.Load()")
 					continue
 				}
 				if e.Op&fsnotify.Remove == fsnotify.Remove {
 					p.Unload()
+					log.Print("p.unload()")
 					continue
 				}
 			case err := <-m.watcher.Errors:
