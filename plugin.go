@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"plugin"
 	"reflect"
 	"sync"
 	"sync/atomic"
@@ -23,6 +22,29 @@ const (
 	PluginStatusUnloading
 	PluginStatusUnloaded
 )
+type Symbol any
+
+type PluginType struct {
+	pluginpath string
+	err        string        // set if plugin failed to load
+	loaded     chan struct{} // closed when loaded
+	syms       map[string]any
+}
+
+// Open opens a Go plugin.
+// If a path has already been opened, then the existing *Plugin is returned.
+// It is safe for concurrent use by multiple goroutines.
+func Open(path string) (*PluginType, error) {
+	return open(path)
+}
+
+// Lookup searches for a symbol named symName in plugin p.
+// A symbol is any exported variable or function.
+// It reports an error if the symbol is not found.
+// It is safe for concurrent use by multiple goroutines.
+func (p *PluginType) Lookup(symName string) (Symbol, error) {
+	return lookup(p, symName)
+}
 
 type PluginError struct {
 	Type int
@@ -44,7 +66,7 @@ type Plugin struct {
 	name    string
 	version uint64
 	path    string
-	plugin  *plugin.Plugin
+	plugin  *PluginType
 	status  PluginStatus
 	refs    int
 	cache   map[string]*pluginFuncInfo
@@ -89,7 +111,7 @@ func (p *Plugin) Load() error {
 	}
 	p.setStatus(PluginStatusLoading)
 	path := p.path
-	p1, e := plugin.Open(path)
+	p1, e := Open(path)
 	if e != nil {
 		log.Print("load plugin ", path, " error: ", e)
 		p.setStatus(PluginStatusNone)

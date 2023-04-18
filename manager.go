@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"strings"
-
 	"github.com/fsnotify/fsnotify"
 )
 
