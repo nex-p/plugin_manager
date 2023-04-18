@@ -141,7 +141,7 @@ var (
 )
 
 // lastmoduleinit is defined in package runtime.
-//go:linkname lastmoduleinit runtime.lastmoduleinit
+//go:linkname lastmoduleinit plugin_manager.lastmoduleinit
 func lastmoduleinit() (pluginpath string, syms map[string]any, errstr string)
 
 // doInit is defined in package runtime.
